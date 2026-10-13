@@ -352,7 +352,7 @@ GameObject:
   - component: {fileID: 957314787}
   - component: {fileID: 957314786}
   m_Layer: 0
-  m_Name: BigKid (1)_0
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
