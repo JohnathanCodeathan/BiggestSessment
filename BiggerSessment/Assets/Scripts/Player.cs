@@ -63,8 +63,8 @@ public class Player : MonoBehaviour
                 isJumping = true;
                 canJump = false; //Prevent multiple jumps until landing.
                 
-                forceY = jetSpeed * controller.moving.y;
-                animator.SetInteger("AnimState", 2);
+                forceY = jetSpeed * controller.moving.y; 
+                animator.SetInteger("AnimState", 5);
                 
 
                 
