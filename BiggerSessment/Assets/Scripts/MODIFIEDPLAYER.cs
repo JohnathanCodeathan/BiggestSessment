@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using Unity.VisualScripting.ReorderableList;
 using UnityEngine;
-using UnityEngine.SceneManagement; //Required if we want to work with Scenes
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps; //Required if we want to work with Scenes
 
 
 
@@ -21,6 +24,8 @@ public class Player : MonoBehaviour
     public CapsuleCollider2D alive; //Creates a variable to check if the player is alive
     private bool isJumping = false;
     private bool canJump = false;
+    private int pastx = 1;
+    private int unistate = 0;
 
     AudioSource audioData;
     
@@ -33,13 +38,11 @@ public class Player : MonoBehaviour
         controller = GetComponent<PlayerController>();
         animator = GetComponent<Animator>();
         audioData = GetComponent<AudioSource>();
-
         
     }
 
     void Update()
     {
-        animator.SetInteger("AnimState", 0);
         var absVelX = Mathf.Abs(body2D.linearVelocity.x); //Creates a variable to store horizontal movement velocity (x)
         var absVelY = Mathf.Abs(body2D.linearVelocity.y); //Creates a variable to store vertical movement velocity (y)
         var forceY = 0f; //Creates a variable to store force
@@ -64,41 +67,90 @@ public class Player : MonoBehaviour
                 canJump = false; //Prevent multiple jumps until landing.
                 
                 forceY = jetSpeed * controller.moving.y; 
-                animator.SetInteger("AnimState", 5);
-                
+            }
 
-                
-            }
-            else if (absVelY == 0 && !standing) //Check if the player is not moving vertically and set the animation state accordingly
-            {
-               animator.SetInteger("AnimState", 2);
-            }
             
         }
         else
         {
-            animator.SetInteger("AnimState", 2);
             standing = false;
         }
 
         var forceX = 0f;
 
-        if (controller.moving.x != 0) //Check if the player is moving horizontally
+        if (controller.moving.x != 0 && controller.moving.y == 0) //Check if the player is moving horizontally
         {
             if (absVelX < maxVelocity.x) //Check if the player's horizontal velocity is within limits and adjust force accordingly
             {
                 var newSpeed = speed * controller.moving.x;
 
                 forceX = standing ? newSpeed : (newSpeed * airSpeedMultiplier);
-
-                renderer2D.flipX = forceX < 0;
             }
-
-            animator.SetInteger("AnimState", 1); //Set the animation state for horizontal movement
+            if (controller.moving.x > 0)
+            {
+                pastx = 1;
+            }
+            else if (controller.moving.x < 0)
+            {
+                pastx = -1;
+            }
         }
       
 
         body2D.AddForce(new Vector2(forceX, forceY)); //Apply the calculated forces to the player's Rigidbody2D
+
+        if (canJump == false)
+        {
+           if (controller.moving.y > 0 && isJumping == true) //If going up or jumping up
+            {
+                if (pastx == 1)
+                {
+                    unistate = 4;
+                }
+                else if (pastx == -1)
+                {
+                    unistate = 6;
+                }
+            }
+            else
+            {
+                if (pastx == 1)
+                {
+                    unistate = 5;
+                }
+                else if (pastx == -1)
+                {
+                    unistate = 7;
+                }
+            } 
+        }
+        else
+        {
+            if (controller.moving.x != 0)
+            {
+                if (pastx == 1)
+                {
+                    unistate = 1;
+                }
+                else if (pastx == -1)
+                {
+                    unistate = 3;
+                }
+            }
+            else if (controller.moving.x == 0)
+            {
+                if (pastx == 1)
+                {
+                    unistate = 0;
+                }
+                else if (pastx == -1)
+                {
+                    unistate = 2;
+                }
+            }            
+        }
+
+        animator.SetInteger("AnimState", unistate);
     }
 
     
@@ -108,6 +160,7 @@ public class Player : MonoBehaviour
         {
             isJumping = false;
             canJump = true;
+            
         }
     }
 
