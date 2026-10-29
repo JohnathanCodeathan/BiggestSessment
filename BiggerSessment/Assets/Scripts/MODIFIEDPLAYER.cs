@@ -17,16 +17,16 @@ public class Player : MonoBehaviour
     public float standingThreshold = 4f; //Stores a variable to check if the player is standing on the ground
     public float airSpeedMultiplier = .3f; //Multiplies the air speed of the player
 
+
     private Rigidbody2D body2D; //Creates a variable for the RigidBody2D component
     private SpriteRenderer renderer2D; //Creates a variable to render the sprite
     private PlayerController controller; //Creates a variable for the controller (created in a separate script)
     private Animator animator; //Creates a variable to work with the Player animations
-    public CapsuleCollider2D alive; //Creates a variable to check if the player is alive
+    public BoxCollider2D alive; //Creates a variable to check if the player is alive
     private bool isJumping = false;
     private bool canJump = false;
     private int pastx = 1;
     private int unistate = 0;
-
     AudioSource audioData;
     
   /*//Starts before the first frame. Gets the RigidBody2D, SpriteRenderer, PlayerController 
@@ -40,14 +40,12 @@ public class Player : MonoBehaviour
         audioData = GetComponent<AudioSource>();
         
     }
-
     void Update()
     {
         var absVelX = Mathf.Abs(body2D.linearVelocity.x); //Creates a variable to store horizontal movement velocity (x)
         var absVelY = Mathf.Abs(body2D.linearVelocity.y); //Creates a variable to store vertical movement velocity (y)
         var forceY = 0f; //Creates a variable to store force
-
-          
+        
         // Access the player's Y-axis position
         float playerYPosition = transform.position.y;
         if (playerYPosition < -150)  //Check if the player has fallen below a certain position on the screen and return to the Splash Screen if true
@@ -55,6 +53,12 @@ public class Player : MonoBehaviour
             SceneManager.LoadScene("SplashScreen");
         }
     
+        if (controller.JumpReleased == 1)
+        {
+            body2D.linearVelocity = new Vector3(body2D.linearVelocity.x, 0); //thank you random guy from unity docs from 2017 for this line of code
+            forceY = (jetSpeed*0)-200;     
+            controller.JumpReleased = 0;              
+        }    
         if (absVelY <= standingThreshold) //Check if the player is standing on the ground or not
         {
             
@@ -65,11 +69,9 @@ public class Player : MonoBehaviour
                 //audioData.Play(0);
                 isJumping = true;
                 canJump = false; //Prevent multiple jumps until landing.
-                
-                forceY = jetSpeed * controller.moving.y; 
+                forceY = jetSpeed * controller.moving.y;
+                controller.JumpReleased = 0;
             }
-
-            
         }
         else
         {
@@ -95,13 +97,11 @@ public class Player : MonoBehaviour
                 pastx = -1;
             }
         }
-      
 
         body2D.AddForce(new Vector2(forceX, forceY)); //Apply the calculated forces to the player's Rigidbody2D
-
         if (canJump == false)
         {
-           if (controller.moving.y > 0 && isJumping == true) //If going up or jumping up
+           if (controller.bigjump == true && isJumping == true) //If going up or jumping up
             {
                 if (pastx == 1)
                 {
@@ -122,6 +122,7 @@ public class Player : MonoBehaviour
                 {
                     unistate = 7;
                 }
+                
             } 
         }
         else
@@ -154,16 +155,25 @@ public class Player : MonoBehaviour
     }
 
     
-    void OnCollisionEnter2D(Collision2D collision) //Function to enable jumping again after landing.
+    void OnTriggerEnter2D(Collider2D other) //Function to enable jumping again after landing.
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (other.CompareTag("Ground"))
         {
             isJumping = false;
             canJump = true;
+            controller.JumpReleased = 0;
+            controller.bigjump = false;
             
         }
     }
-
+    void OnTriggerExit2D(Collider2D other) //Function to enable jumping again after landing.
+    {
+        if (other.CompareTag("Ground"))
+        {
+            canJump = false;
+            
+        }
+    }
 
 
 
